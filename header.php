@@ -15,7 +15,7 @@
     <body>
         <br />
         <div class="container">
-            <h2 align="center">Inventory Management System</h2>
+            <h2 align="center">Dhameliya Enterprise</h2>
 
             <nav class="navbar navbar-inverse">
                 <div class="container-fluid">

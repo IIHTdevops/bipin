@@ -47,7 +47,7 @@ if (isset($_POST["login"])) {
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Inventory Management System using PHP with Ajax Jquery</title>		
+        <title>Dhameliya Enterprise</title>		
         <script src="js/jquery-1.10.2.min.js"></script>
         <link rel="stylesheet" href="css/bootstrap.min.css" />
         <script src="js/bootstrap.min.js"></script>
@@ -55,7 +55,7 @@ if (isset($_POST["login"])) {
     <body>
         <br />
         <div class="container">
-            <h2 align="center">Inventory Management System using PHP with Ajax Jquery</h2>
+            <h2 align="center">Dhameliya Enterprise</h2>
             <br />
             <div class="panel panel-default">
                 <div class="panel-heading">Login</div>
