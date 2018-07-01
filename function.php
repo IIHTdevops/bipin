@@ -1,6 +1,29 @@
 <?php
 
 //function.php
+function pcodeExists($product_code, $product_id, $connect) {
+
+    $query = "SELECT count(*) AS PCODE FROM product WHERE product_code = :product_code ";
+    $inputArr = [':product_code' => $product_code
+    ];
+    if (isset($product_id)) {
+        $query .= " and product_id != :product_id ";
+        $inputArr[':product_id'] = $product_id;
+    }
+    $statement = $connect->prepare($query);
+    $statement->execute(
+            $inputArr
+    );
+    $result = $statement->fetchAll();
+    foreach ($result as $row) {
+        $output['PCODE'] = $row['PCODE'];
+    }
+
+    if (isset($output['PCODE']) && ((int) $output['PCODE']) > 0) {
+        return "1";
+    }
+    return "0";
+}
 
 function fill_category_list($connect) {
     $query = "
@@ -72,6 +95,10 @@ function fetch_product_details($product_id, $connect) {
         $output['product_name'] = $row["product_name"];
         $output['quantity'] = $row["product_quantity"];
         $output['price'] = $row['product_base_price'];
+        $output['cal_price'] = $row['product_net_price'];
+        $output['pcode'] = $row['product_code_other'];
+        $output['bill_base_price'] = $row['bill_base_price'];
+        $output['bill_net_price'] = $row['bill_net_price'];
         $output['tax'] = $row['product_tax'];
     }
     return $output;
@@ -156,6 +183,22 @@ function count_total_order_value($connect) {
     }
 }
 
+function count_total_bill_value($connect) {
+    $query = "
+	SELECT sum(inventory_order_total) as total_order_value FROM bill_order 
+	WHERE inventory_order_status='active'
+	";
+    if ($_SESSION['type'] == 'user') {
+        $query .= ' AND user_id = "' . $_SESSION["user_id"] . '"';
+    }
+    $statement = $connect->prepare($query);
+    $statement->execute();
+    $result = $statement->fetchAll();
+    foreach ($result as $row) {
+        return number_format($row['total_order_value'], 2);
+    }
+}
+
 function count_total_cash_order_value($connect) {
     $query = "
 	SELECT sum(inventory_order_total) as total_order_value FROM inventory_order 
@@ -173,9 +216,41 @@ function count_total_cash_order_value($connect) {
     }
 }
 
+function count_total_cash_bill_value($connect) {
+    $query = "
+	SELECT sum(inventory_order_total) as total_order_value FROM bill_order 
+	WHERE payment_status = 'cash' 
+	AND inventory_order_status='active'
+	";
+    if ($_SESSION['type'] == 'user') {
+        $query .= ' AND user_id = "' . $_SESSION["user_id"] . '"';
+    }
+    $statement = $connect->prepare($query);
+    $statement->execute();
+    $result = $statement->fetchAll();
+    foreach ($result as $row) {
+        return number_format($row['total_order_value'], 2);
+    }
+}
+
 function count_total_credit_order_value($connect) {
     $query = "
 	SELECT sum(inventory_order_total) as total_order_value FROM inventory_order WHERE payment_status = 'credit' AND inventory_order_status='active'
+	";
+    if ($_SESSION['type'] == 'user') {
+        $query .= ' AND user_id = "' . $_SESSION["user_id"] . '"';
+    }
+    $statement = $connect->prepare($query);
+    $statement->execute();
+    $result = $statement->fetchAll();
+    foreach ($result as $row) {
+        return number_format($row['total_order_value'], 2);
+    }
+}
+
+function count_total_credit_bill_value($connect) {
+    $query = "
+	SELECT sum(inventory_order_total) as total_order_value FROM bill_order WHERE payment_status = 'credit' AND inventory_order_status='active'
 	";
     if ($_SESSION['type'] == 'user') {
         $query .= ' AND user_id = "' . $_SESSION["user_id"] . '"';

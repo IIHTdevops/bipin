@@ -73,6 +73,30 @@ include('header.php');
             </div>
         </div>
     </div>
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading"><strong>Total Bill Value</strong></div>
+            <div class="panel-body" align="center">
+                <h1>$<?php echo count_total_bill_value($connect); ?></h1>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading"><strong>Total Cash Bill Value</strong></div>
+            <div class="panel-body" align="center">
+                <h1>$<?php echo count_total_cash_bill_value($connect); ?></h1>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading"><strong>Total Credit Bill Value</strong></div>
+            <div class="panel-body" align="center">
+                <h1>$<?php echo count_total_credit_bill_value($connect); ?></h1>
+            </div>
+        </div>
+    </div>
     <hr />
     <?php
     if ($_SESSION['type'] == 'master') {

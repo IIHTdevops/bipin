@@ -34,6 +34,7 @@
                         }
                         ?>
                         <li><a href="order.php">Order</a></li>
+                        <li><a href="corder.php">Company Order</a></li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
                         <li class="dropdown">

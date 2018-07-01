@@ -9,7 +9,7 @@ include('function.php');
 if (isset($_POST['btn_action'])) {
     if ($_POST['btn_action'] == 'Add') {
         $query = "
-		INSERT INTO inventory_order (user_id, inventory_order_total, inventory_order_date, inventory_order_name, inventory_order_address, payment_status, inventory_order_status, inventory_order_created_date) 
+		INSERT INTO bill_order (user_id, inventory_order_total, inventory_order_date, inventory_order_name, inventory_order_address, payment_status, inventory_order_status, inventory_order_created_date) 
 		VALUES (:user_id, :inventory_order_total, :inventory_order_date, :inventory_order_name, :inventory_order_address, :payment_status, :inventory_order_status, :inventory_order_created_date)
 		";
         $statement = $connect->prepare($query);
@@ -34,7 +34,7 @@ if (isset($_POST['btn_action'])) {
             for ($count = 0; $count < count($_POST["product_id"]); $count++) {
                 $product_details = fetch_product_details($_POST["product_id"][$count], $connect);
                 $sub_query = "
-				INSERT INTO inventory_order_product (inventory_order_id, product_id, quantity, price, tax) VALUES (:inventory_order_id, :product_id, :quantity, :price, :tax)
+				INSERT INTO bill_order_product (inventory_order_id, product_id, quantity, price, tax) VALUES (:inventory_order_id, :product_id, :quantity, :price, :tax)
 				";
                 $statement = $connect->prepare($sub_query);
                 $statement->execute(
@@ -42,15 +42,15 @@ if (isset($_POST['btn_action'])) {
                             ':inventory_order_id' => $inventory_order_id,
                             ':product_id' => $_POST["product_id"][$count],
                             ':quantity' => $_POST["quantity"][$count],
-                            ':price' => $product_details['cal_price'],
+                            ':price' => $product_details['bill_net_price'],
                             ':tax' => $product_details['tax']
                         )
                 );
-                $base_price = $product_details['cal_price'] * $_POST["quantity"][$count];
+                $base_price = $product_details['bill_net_price'] * $_POST["quantity"][$count];
                 $total_amount = $total_amount + $base_price;
             }
             $update_query = "
-			UPDATE inventory_order 
+			UPDATE bill_order 
 			SET inventory_order_total = '" . $total_amount . "' 
 			WHERE inventory_order_id = '" . $inventory_order_id . "'
 			";
@@ -69,7 +69,7 @@ if (isset($_POST['btn_action'])) {
 
     if ($_POST['btn_action'] == 'fetch_single') {
         $query = "
-		SELECT * FROM inventory_order WHERE inventory_order_id = :inventory_order_id
+		SELECT * FROM bill_order WHERE inventory_order_id = :inventory_order_id
 		";
         $statement = $connect->prepare($query);
         $statement->execute(
@@ -86,7 +86,7 @@ if (isset($_POST['btn_action'])) {
             $output['payment_status'] = $row['payment_status'];
         }
         $sub_query = "
-		SELECT * FROM inventory_order_product 
+		SELECT * FROM bill_order_product 
 		WHERE inventory_order_id = '" . $_POST["inventory_order_id"] . "'
 		";
         $statement = $connect->prepare($sub_query);
@@ -135,7 +135,7 @@ if (isset($_POST['btn_action'])) {
 
     if ($_POST['btn_action'] == 'Edit') {
         $delete_query = "
-		DELETE FROM inventory_order_product 
+		DELETE FROM bill_order_product 
 		WHERE inventory_order_id = '" . $_POST["inventory_order_id"] . "'
 		";
         $statement = $connect->prepare($delete_query);
@@ -146,7 +146,7 @@ if (isset($_POST['btn_action'])) {
             for ($count = 0; $count < count($_POST["product_id"]); $count++) {
                 $product_details = fetch_product_details($_POST["product_id"][$count], $connect);
                 $sub_query = "
-				INSERT INTO inventory_order_product (inventory_order_id, product_id, quantity, price, tax) VALUES (:inventory_order_id, :product_id, :quantity, :price, :tax)
+				INSERT INTO bill_order_product (inventory_order_id, product_id, quantity, price, tax) VALUES (:inventory_order_id, :product_id, :quantity, :price, :tax)
 				";
                 $statement = $connect->prepare($sub_query);
                 $statement->execute(
@@ -162,7 +162,7 @@ if (isset($_POST['btn_action'])) {
                 $total_amount = $total_amount + $base_price;
             }
             $update_query = "
-			UPDATE inventory_order 
+			UPDATE bill_order 
 			SET inventory_order_name = :inventory_order_name, 
 			inventory_order_date = :inventory_order_date, 
 			inventory_order_address = :inventory_order_address, 
@@ -194,7 +194,7 @@ if (isset($_POST['btn_action'])) {
             $status = 'inactive';
         }
         $query = "
-		UPDATE inventory_order 
+		UPDATE bill_order 
 		SET inventory_order_status = :inventory_order_status 
 		WHERE inventory_order_id = :inventory_order_id
 		";

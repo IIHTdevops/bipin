@@ -11,23 +11,37 @@ if (isset($_POST['btn_action'])) {
     if ($_POST['btn_action'] == 'load_brand') {
         echo fill_brand_list($connect, $_POST['category_id']);
     }
-
+    
     if ($_POST['btn_action'] == 'Add') {
+
+        if (pcodeExists($_POST['product_code'], null, $connect) == "1") {
+            echo "PCODE";
+            return;
+        }
+
         $query = "
-		INSERT INTO product (category_id, brand_id, product_name, product_description, product_quantity, product_unit, product_base_price, product_tax, product_enter_by, product_status, product_date) 
-		VALUES (:category_id, :brand_id, :product_name, :product_description, :product_quantity, :product_unit, :product_base_price, :product_tax, :product_enter_by, :product_status, :product_date)
+		INSERT INTO product (category_id, brand_id, product_code, product_code_other, is_gst, product_name, product_description, 
+                bill_base_price ,bill_net_price ,product_quantity, product_unit, product_base_price, product_tax, product_net_price, product_enter_by, product_status, product_date) 
+		VALUES  (:category_id, :brand_id, :product_code, :product_code_other, :is_gst, :product_name, :product_description, 
+                :bill_base_price, :bill_net_price, :product_quantity, :product_unit, :product_base_price, :product_tax, :product_net_price, :product_enter_by, :product_status, :product_date)
 		";
         $statement = $connect->prepare($query);
         $statement->execute(
                 array(
                     ':category_id' => $_POST['category_id'],
                     ':brand_id' => $_POST['brand_id'],
+                    ':product_code' => $_POST['product_code'],
+                    ':product_code_other' => $_POST['product_code_other'],
+                    ':is_gst' => isset($_POST['is_gst']) ? '1' : '0',
                     ':product_name' => $_POST['product_name'],
                     ':product_description' => $_POST['product_description'],
                     ':product_quantity' => $_POST['product_quantity'],
+                    ':bill_base_price' => $_POST['bill_base_price'],
+                    ':bill_net_price' => $_POST['bill_net_price'],
                     ':product_unit' => $_POST['product_unit'],
                     ':product_base_price' => $_POST['product_base_price'],
                     ':product_tax' => $_POST['product_tax'],
+                    ':product_net_price' => $_POST['product_net_price'],
                     ':product_enter_by' => $_SESSION["user_id"],
                     ':product_status' => 'active',
                     ':product_date' => date("Y-m-d")
@@ -62,6 +76,14 @@ if (isset($_POST['btn_action'])) {
             }
             $output .= '
 			<tr>
+				<td>Product Code</td>
+				<td>' . $row["product_code"] . '</td>
+			</tr>
+			<tr>
+				<td>Product Code Internal</td>
+				<td>' . $row["product_code_other"] . '</td>
+			</tr>
+			<tr>
 				<td>Product Name</td>
 				<td>' . $row["product_name"] . '</td>
 			</tr>
@@ -82,12 +104,28 @@ if (isset($_POST['btn_action'])) {
 				<td>' . $row["product_quantity"] . ' ' . $row["product_unit"] . '</td>
 			</tr>
 			<tr>
+				<td>IS GST</td>
+				<td>' . ($row["is_gst"] == "0" ? "No" : "Yes") . '</td>
+			</tr>
+			<tr>
+				<td>Bill Base Price</td>
+				<td>' . $row["bill_base_price"] . '</td>
+			</tr>
+			<tr>
+				<td>Bill Net Price</td>
+				<td>' . $row["bill_net_price"] . '</td>
+			</tr>
+			<tr>
 				<td>Base Price</td>
 				<td>' . $row["product_base_price"] . '</td>
 			</tr>
 			<tr>
 				<td>Tax (%)</td>
 				<td>' . $row["product_tax"] . '</td>
+			</tr>
+			<tr>
+				<td>Net Price</td>
+				<td>' . $row["product_net_price"] . '</td>
 			</tr>
 			<tr>
 				<td>Enter By</td>
@@ -120,27 +158,40 @@ if (isset($_POST['btn_action'])) {
             $output['category_id'] = $row['category_id'];
             $output['brand_id'] = $row['brand_id'];
             $output["brand_select_box"] = fill_brand_list($connect, $row["category_id"]);
+            $output['product_code_other'] = $row['product_code_other'];
+            $output['product_code'] = $row['product_code'];
             $output['product_name'] = $row['product_name'];
             $output['product_description'] = $row['product_description'];
             $output['product_quantity'] = $row['product_quantity'];
             $output['product_unit'] = $row['product_unit'];
 
+            $output['bill_base_price'] = $row['bill_base_price'];
+            $output['bill_net_price'] = $row['bill_net_price'];
             $output['product_base_price'] = $row['product_base_price'];
             $output['product_tax'] = $row['product_tax'];
+            $output['product_net_price'] = $row['product_net_price'];
         }
         echo json_encode($output);
     }
 
     if ($_POST['btn_action'] == 'Edit') {
+        if (pcodeExists($_POST['product_code'], $_POST['product_id'], $connect) == "1") {
+            echo "PCODE";
+            return;
+        }
         $query = "
 		UPDATE product 
 		set category_id = :category_id, 
 		brand_id = :brand_id,
+		product_code = :product_code,
+		product_code_other = :product_code_other,
 		product_name = :product_name,
 		product_description = :product_description, 
 		product_quantity = :product_quantity, 
 		product_unit = :product_unit, 
 		product_base_price = :product_base_price, 
+		bill_base_price = :bill_base_price, 
+		bill_net_price = :bill_net_price, 
 		product_tax = :product_tax 
 		WHERE product_id = :product_id
 		";
@@ -149,11 +200,15 @@ if (isset($_POST['btn_action'])) {
                 array(
                     ':category_id' => $_POST['category_id'],
                     ':brand_id' => $_POST['brand_id'],
+                    ':product_code' => $_POST['product_code'],
+                    ':product_code_other' => $_POST['product_code_other'],
                     ':product_name' => $_POST['product_name'],
                     ':product_description' => $_POST['product_description'],
                     ':product_quantity' => $_POST['product_quantity'],
                     ':product_unit' => $_POST['product_unit'],
                     ':product_base_price' => $_POST['product_base_price'],
+                    ':bill_base_price' => $_POST['bill_base_price'],
+                    ':bill_net_price' => $_POST['bill_net_price'],
                     ':product_tax' => $_POST['product_tax'],
                     ':product_id' => $_POST['product_id']
                 )

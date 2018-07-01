@@ -25,7 +25,7 @@ if (isset($_POST["search"]["value"])) {
 }
 
 if (isset($_POST['order'])) {
-    $query .= 'ORDER BY ' . $_POST['order']['0']['column'] . ' ' . $_POST['order']['0']['dir'] . ' ';
+    $query .= 'ORDER BY ' . ((int) $_POST['order']['0']['column'] + 1) . ' ' . $_POST['order']['0']['dir'] . ' ';
 } else {
     $query .= 'ORDER BY product_id DESC ';
 }
@@ -49,6 +49,8 @@ foreach ($result as $row) {
     $sub_array[] = $row['product_id'];
     $sub_array[] = $row['category_name'];
     $sub_array[] = $row['brand_name'];
+    $sub_array[] = $row['product_code'];
+    $sub_array[] = $row['product_code_other'];
     $sub_array[] = $row['product_name'];
     $sub_array[] = available_product_quantity($connect, $row["product_id"]) . ' ' . $row["product_unit"];
     $sub_array[] = $row['user_name'];
