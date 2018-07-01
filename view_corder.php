@@ -11,7 +11,7 @@ if (isset($_GET["pdf"]) && isset($_GET['order_id'])) {
     }
     $output = '';
     $statement = $connect->prepare("
-		SELECT * FROM inventory_order 
+		SELECT * FROM bill_order 
 		WHERE inventory_order_id = :inventory_order_id
 		LIMIT 1
 	");
@@ -25,7 +25,7 @@ if (isset($_GET["pdf"]) && isset($_GET['order_id'])) {
         $output .= '
 		<table width="100%" border="1" cellpadding="5" cellspacing="0">
 			<tr>
-				<td colspan="2" align="center" style="font-size:18px"><b>Invoice</b></td>
+				<td colspan="2" align="center" style="font-size:18px"><b>Bill</b></td>
 			</tr>
 			<tr>
 				<td colspan="2">
@@ -39,8 +39,8 @@ if (isset($_GET["pdf"]) && isset($_GET['order_id'])) {
 						</td>
 						<td width="35%">
 							GST No : GST1234567890Z5<br />
-							Invoice No. : ' . $row["inventory_order_id"] . '<br />
-							Invoice Date : ' . $row["inventory_order_date"] . '<br />
+							Bill No. : ' . $row["inventory_order_id"] . '<br />
+							Bill Date : ' . $row["inventory_order_date"] . '<br />
 						</td>
 					</tr>
 				</table>
@@ -60,7 +60,7 @@ if (isset($_GET["pdf"]) && isset($_GET['order_id'])) {
                                         </tr>
 		';
         $statement = $connect->prepare("
-			SELECT * FROM inventory_order_product 
+			SELECT * FROM bill_order_product 
 			WHERE inventory_order_id = :inventory_order_id
 		");
         $statement->execute(
@@ -77,8 +77,8 @@ if (isset($_GET["pdf"]) && isset($_GET['order_id'])) {
         foreach ($product_result as $sub_row) {
             $count = $count + 1;
             $product_data = fetch_product_details($sub_row['product_id'], $connect);
-            $actual_amount = $sub_row["quantity"] * $product_data["price"];
-            $actual_amount_total = $sub_row["quantity"] * $product_data["cal_price"];
+            $actual_amount = $sub_row["quantity"] * $product_data["bill_base_price"];
+            $actual_amount_total = $sub_row["quantity"] * $product_data["bill_net_price"];
             $tax_amount = ($actual_amount * $sub_row["tax"]) / 100;
             $total_product_amount = $actual_amount + $tax_amount;
             $total_actual_amount = $total_actual_amount + $actual_amount;
@@ -89,7 +89,7 @@ if (isset($_GET["pdf"]) && isset($_GET['order_id'])) {
 					<td>' . $count . '</td>
 					<td>' . $product_data['pcode'] . '</td>
 					<td>' . $product_data['product_name'] . '</td>
-					<td aling="right">' . $product_data["price"] . '</td>
+					<td aling="right">' . $product_data["bill_base_price"] . '</td>
 					<td>' . $sub_row["quantity"] . '</td>
 					<td align="right">' . number_format($actual_amount, 2) . '</td>
 					<td>' . $sub_row["tax"] . '%</td>

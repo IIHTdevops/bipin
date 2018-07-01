@@ -36,6 +36,8 @@ include('header.php');
                                     <th>ID</th>
                                     <th>Category</th>
                                     <th>Brand</th>
+                                    <th>Product Code</th>
+                                    <th>Product Code Internal</th>
                                     <th>Product Name</th>
                                     <th>Quantity</th>
                                     <th>Enter By</th>
@@ -60,6 +62,7 @@ include('header.php');
                     <h4 class="modal-title"><i class="fa fa-plus"></i> Add Product</h4>
                 </div>
                 <div class="modal-body">
+                    <span id="alert_action_model"></span>
                     <div class="form-group">
                         <label>Select Category</label>
                         <select name="category_id" id="category_id" class="form-control" required>
@@ -72,6 +75,14 @@ include('header.php');
                         <select name="brand_id" id="brand_id" class="form-control" required>
                             <option value="">Select Brand</option>
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Enter Product Code</label>
+                        <input type="text" name="product_code" id="product_code" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Enter Product Code Internal</label>
+                        <input type="text" name="product_code_other" id="product_code_other" class="form-control" required />
                     </div>
                     <div class="form-group">
                         <label>Enter Product Name</label>
@@ -106,13 +117,28 @@ include('header.php');
                             </span>
                         </div>
                     </div>
+                    <div class="checkbox">
+                        <label><input type="checkbox" value="1" name="is_gst" id="is_gst" >Is GST?</label>
+                    </div>
+                    <div class="form-group">
+                        <label>Enter Product Bill Price</label>
+                        <input type="text" name="bill_base_price" id="bill_base_price" class="form-control" required pattern="[+-]?([0-9]*[.])?[0-9]+" />
+                    </div>
+                    <div class="form-group">
+                        <label>Enter Product Bill Net Price</label>
+                        <input type="text" name="bill_net_price" id="bill_net_price" class="form-control" required pattern="[+-]?([0-9]*[.])?[0-9]+" />
+                    </div>
                     <div class="form-group">
                         <label>Enter Product Base Price</label>
                         <input type="text" name="product_base_price" id="product_base_price" class="form-control" required pattern="[+-]?([0-9]*[.])?[0-9]+" />
                     </div>
                     <div class="form-group">
                         <label>Enter Product Tax (%)</label>
-                        <input type="text" name="product_tax" id="product_tax" class="form-control" required pattern="[+-]?([0-9]*[.])?[0-9]+" />
+                        <input type="text" disabled="disabled" value="0" name="product_tax" id="product_tax" class="form-control" required pattern="[+-]?([0-9]*[.])?[0-9]+" />
+                    </div>
+                    <div class="form-group">
+                        <label>Product Net Price</label>
+                        <input type="text" disabled="disabled" name="product_net_price" id="product_net_price" class="form-control" required pattern="[+-]?([0-9]*[.])?[0-9]+" />
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -158,20 +184,48 @@ include('header.php');
             },
             "columnDefs": [
                 {
-                    "targets": [7, 8, 9],
+                    "targets": [9, 10, 11],
                     "orderable": false,
-                },
+                }
             ],
             "pageLength": 10
         });
 
         $('#add_button').click(function () {
+            $("#alert_action_model").html("");
             $('#productModal').modal('show');
             $('#product_form')[0].reset();
             $('.modal-title').html("<i class='fa fa-plus'></i> Add Product");
             $('#action').val("Add");
             $('#btn_action').val("Add");
+
+            $('#is_gst').change(function () {
+                if ($(this).is(":checked")) {
+                    $(this).attr("checked", true);
+                    $("#product_tax").removeAttr("disabled");
+                    $("#product_tax").val("18");
+                    $('#product_net_price').val(findTax());
+                } else {
+                    $("#product_tax").attr("disabled", "disabled");
+                    $("#product_tax").val("0");
+                    $('#product_net_price').val(findTax());
+                }
+                $('#is_gst').val($(this).is(':checked'));
+            });
+
+            $('#product_base_price, #product_tax').keyup(function () {
+                if ($('#is_gst').is(":checked")) {
+                    $('#product_net_price').val(findTax());
+                } else {
+                    $('#product_net_price').val($(this).val());
+                }
+            });
+
         });
+
+        function findTax() {
+            return parseFloat($('#product_base_price').val()) + parseFloat(($('#product_base_price').val() * $('#product_tax').val() / 100));
+        }
 
         $('#category_id').change(function () {
             var category_id = $('#category_id').val();
@@ -190,18 +244,28 @@ include('header.php');
         $(document).on('submit', '#product_form', function (event) {
             event.preventDefault();
             $('#action').attr('disabled', 'disabled');
+            // Find disabled inputs, and remove the "disabled" attribute
+            var disabled = $(this).find(':input:disabled').removeAttr('disabled');
             var form_data = $(this).serialize();
+            // re-disabled the set of inputs that you previously enabled
+            disabled.attr('disabled', 'disabled');
             $.ajax({
                 url: "product_action.php",
                 method: "POST",
                 data: form_data,
                 success: function (data)
                 {
-                    $('#product_form')[0].reset();
-                    $('#productModal').modal('hide');
-                    $('#alert_action').fadeIn().html('<div class="alert alert-success">' + data + '</div>');
-                    $('#action').attr('disabled', false);
-                    productdataTable.ajax.reload();
+                    if (data == "PCODE") {
+                        $("#alert_action_model").html('<div class="alert alert-danger">' + "Product code is already exists!!" + '</div>');
+                        $("#product_code").focus();
+                        $('#action').removeAttr('disabled');
+                    } else {
+                        $('#product_form')[0].reset();
+                        $('#productModal').modal('hide');
+                        $('#alert_action').fadeIn().html('<div class="alert alert-success">' + data + '</div>');
+                        $('#action').attr('disabled', false);
+                        productdataTable.ajax.reload();
+                    }
                 }
             })
         });
@@ -233,12 +297,17 @@ include('header.php');
                     $('#category_id').val(data.category_id);
                     $('#brand_id').html(data.brand_select_box);
                     $('#brand_id').val(data.brand_id);
+                    $('#product_code').val(data.product_code);
+                    $('#product_code_other').val(data.product_code_other);
                     $('#product_name').val(data.product_name);
                     $('#product_description').val(data.product_description);
                     $('#product_quantity').val(data.product_quantity);
                     $('#product_unit').val(data.product_unit);
                     $('#product_base_price').val(data.product_base_price);
                     $('#product_tax').val(data.product_tax);
+                    $('#bill_base_price').val(data.bill_base_price);
+                    $('#bill_net_price').val(data.bill_net_price);
+                    $('#product_net_price').val(data.product_net_price);
                     $('.modal-title').html("<i class='fa fa-pencil-square-o'></i> Edit Product");
                     $('#product_id').val(product_id);
                     $('#action').val("Edit");
